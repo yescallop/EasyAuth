@@ -32,7 +32,7 @@ public class EventListener implements Listener {
         this.plugin = plugin;
         lang = plugin.getLanguage();
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -43,7 +43,7 @@ public class EventListener implements Listener {
             player.sendMessage(plugin.isPlayerRegistered(player) ? lang.translateString("login.input") : lang.translateString("register.input"));
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
@@ -79,21 +79,21 @@ public class EventListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onInventoryPickupItem(InventoryPickupItemEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
@@ -101,49 +101,49 @@ public class EventListener implements Listener {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer()) && event.getMessage().startsWith("/")) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.deauthenticatePlayer(player);
         confirmWaiting.remove(player);
     }
-    
+
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         Entity entity = event.getEntity();

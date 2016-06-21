@@ -5,6 +5,8 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.Utils;
 import cn.yescallop.easyauth.lang.BaseLang;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +15,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
-
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 public class EasyAuth extends PluginBase {
 
@@ -49,31 +48,31 @@ public class EasyAuth extends PluginBase {
         }
         this.getLogger().info(lang.translateString("easyauth.loaded"));
     }
-    
+
     private String getRandomSalt() {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
         return new BASE64Encoder().encode(salt);
     }
-    
+
     public BaseLang getLanguage() {
         return lang;
     }
-    
+
     public void authenticatePlayer(Player player) {
         authedPlayers.add(player);
         setPlayerLastUUID(player);
     }
-    
+
     public void deauthenticatePlayer(Player player) {
         authedPlayers.remove(player);
     }
-    
+
     public boolean isPlayerAuthenticated(Player player) {
         return authedPlayers.contains(player);
     }
-    
+
     private byte[] getEncryptedPassword(String password) {
         MessageDigest digest;
         try {
@@ -85,11 +84,11 @@ public class EasyAuth extends PluginBase {
         }
         return digest.digest();
     }
-    
+
     private String getEncryptedPasswordString(String password) {
         return new BASE64Encoder().encode(getEncryptedPassword(password));
     }
-    
+
     public boolean checkPlayerPassword(Player player, String password) {
         Config config = getPlayerConfig(player);
         String realPasswordStr = config.getString("password");
@@ -100,37 +99,37 @@ public class EasyAuth extends PluginBase {
         } catch (IOException e) {
             return false;
         }
-        byte [] encryptedPassword = getEncryptedPassword(password);
+        byte[] encryptedPassword = getEncryptedPassword(password);
         return Arrays.equals(realPassword, encryptedPassword);
     }
-    
+
     public void setPlayerPassword(Player player, String password) {
         Config config = getPlayerConfig(player);
         String encryptedPassword = getEncryptedPasswordString(password);
         config.set("password", encryptedPassword);
         config.save();
     }
-    
+
     public void registerPlayer(Player player, String password) {
         setPlayerPassword(player, password);
         authenticatePlayer(player);
     }
-    
+
     public void unregisterPlayer(Player player) {
         deauthenticatePlayer(player);
         getPlayerConfigFile(player).delete();
     }
-    
+
     public boolean isPlayerRegistered(Player player) {
         return getPlayerConfigFile(player).exists();
     }
-    
+
     public void setPlayerLastUUID(Player player) {
         Config config = getPlayerConfig(player);
         config.set("lastUUID", player.getUniqueId().toString());
         config.save();
     }
-    
+
     public UUID getPlayerLastUUID(Player player) {
         if (isPlayerRegistered(player)) {
             Config config = getPlayerConfig(player);
@@ -140,17 +139,16 @@ public class EasyAuth extends PluginBase {
             return null;
         }
     }
-    
+
     public boolean isPlayerLastUUID(Player player) {
         UUID uuid = getPlayerLastUUID(player);
-        if (uuid == null) return false;
-        return player.getUniqueId().equals(uuid);
+        return uuid != null && player.getUniqueId().equals(uuid);
     }
-    
+
     public File getPlayerConfigFile(Player player) {
         return new File(playersFolder, player.getName().toLowerCase() + ".yml");
     }
-    
+
     public Config getPlayerConfig(Player player) {
         return new Config(getPlayerConfigFile(player), Config.YAML);
     }
