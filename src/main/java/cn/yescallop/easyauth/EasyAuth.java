@@ -4,24 +4,22 @@ import cn.nukkit.Player;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.Utils;
+
 import cn.yescallop.easyauth.lang.BaseLang;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 
 public class EasyAuth extends PluginBase {
 
     private BaseLang lang;
     private byte[] salt;
     private File playersFolder;
-    private ArrayList<Player> authedPlayers = new ArrayList<>();
+    private List<Player> authedPlayers = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -33,7 +31,7 @@ public class EasyAuth extends PluginBase {
                 Utils.writeFile(saltFile, getRandomSalt());
             }
             String salt = Utils.readFile(saltFile);
-            this.salt = new BASE64Decoder().decodeBuffer(salt);
+            this.salt = Base64.getDecoder().decode(salt);
         } catch (IOException e) {
             this.salt = new byte[0];
         }
@@ -53,7 +51,7 @@ public class EasyAuth extends PluginBase {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
-        return new BASE64Encoder().encode(salt);
+        return new String(Base64.getEncoder().encode(salt), StandardCharsets.UTF_8);
     }
 
     public BaseLang getLanguage() {
@@ -78,7 +76,7 @@ public class EasyAuth extends PluginBase {
         try {
             digest = MessageDigest.getInstance("MD5");
             digest.update(salt);
-            digest.update(password.getBytes("UTF-8"));
+            digest.update(password.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return new byte[0];
         }
@@ -86,19 +84,14 @@ public class EasyAuth extends PluginBase {
     }
 
     private String getEncryptedPasswordString(String password) {
-        return new BASE64Encoder().encode(getEncryptedPassword(password));
+        return new String(Base64.getEncoder().encode(getEncryptedPassword(password)), StandardCharsets.UTF_8);
     }
 
     public boolean checkPlayerPassword(Player player, String password) {
         Config config = getPlayerConfig(player);
         String realPasswordStr = config.getString("password");
         if (realPasswordStr == null) return false;
-        byte[] realPassword;
-        try {
-            realPassword = new BASE64Decoder().decodeBuffer(realPasswordStr);
-        } catch (IOException e) {
-            return false;
-        }
+        byte[] realPassword = Base64.getDecoder().decode(realPasswordStr);
         byte[] encryptedPassword = getEncryptedPassword(password);
         return Arrays.equals(realPassword, encryptedPassword);
     }

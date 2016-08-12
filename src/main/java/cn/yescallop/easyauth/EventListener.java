@@ -9,24 +9,19 @@ import cn.nukkit.event.block.BlockBreakEvent;
 import cn.nukkit.event.block.BlockPlaceEvent;
 import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.event.inventory.InventoryPickupItemEvent;
-import cn.nukkit.event.player.PlayerChatEvent;
-import cn.nukkit.event.player.PlayerCommandPreprocessEvent;
-import cn.nukkit.event.player.PlayerDropItemEvent;
-import cn.nukkit.event.player.PlayerInteractEvent;
-import cn.nukkit.event.player.PlayerItemConsumeEvent;
-import cn.nukkit.event.player.PlayerJoinEvent;
-import cn.nukkit.event.player.PlayerMoveEvent;
-import cn.nukkit.event.player.PlayerQuitEvent;
+import cn.nukkit.event.player.*;
 import cn.nukkit.inventory.InventoryHolder;
+
 import cn.yescallop.easyauth.lang.BaseLang;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class EventListener implements Listener {
 
     EasyAuth plugin;
     BaseLang lang;
-    HashMap<Player, String> confirmWaiting = new HashMap<>();
+    Map<Player, String> confirmWaiting = new HashMap<>();
 
     public EventListener(EasyAuth plugin) {
         this.plugin = plugin;
