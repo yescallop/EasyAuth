@@ -31,7 +31,7 @@ public class EventListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (plugin.isPlayerLastUUID(player)) {
+        if (plugin.isPlayerLastClientId(player)) {
             plugin.authenticatePlayer(player);
             player.sendMessage(lang.translateString("login.auto"));
         } else {
