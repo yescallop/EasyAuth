@@ -20,7 +20,7 @@ public class EventListener implements Listener {
 
     private final EasyAuthAPI api;
     private final BaseLang lang;
-    Map<Player, String> confirmWaiting = new HashMap<>();
+    private final Map<Player, String> confirmWaiting = new HashMap<>();
 
     protected EventListener() {
         this.api = EasyAuthAPI.getInstance();
@@ -49,18 +49,12 @@ public class EventListener implements Listener {
                     player.sendMessage(lang.translateString("register.confirm", message));
                     confirmWaiting.put(player, message);
                 } else {
-                    if (!message.equals("\\b")) {
-                        message = message.replaceAll("\\\\(.)", "$1");
-                        if (message.equals(confirmWaiting.get(player))) {
-                            api.registerPlayer(player, message);
-                            player.sendMessage(lang.translateString("register.success"));
-                            confirmWaiting.remove(player);
-                        } else {
-                            player.sendMessage(lang.translateString("register.notmatch"));
-                        }
-                    } else {
-                        player.sendMessage(lang.translateString("register.reinput"));
+                    if (message.equals(confirmWaiting.get(player))) {
+                        api.registerPlayer(player, message);
+                        player.sendMessage(lang.translateString("register.success"));
                         confirmWaiting.remove(player);
+                    } else {
+                        player.sendMessage(lang.translateString("register.notmatch"));
                     }
                 }
             } else {
@@ -99,7 +93,7 @@ public class EventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (!api.isPlayerAuthenticated(event.getPlayer()) && event.getMessage().startsWith("/")) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
