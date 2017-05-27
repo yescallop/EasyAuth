@@ -11,7 +11,6 @@ import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.event.inventory.InventoryPickupItemEvent;
 import cn.nukkit.event.player.*;
 import cn.nukkit.inventory.InventoryHolder;
-
 import cn.yescallop.easyauth.lang.BaseLang;
 
 import java.util.HashMap;
@@ -19,23 +18,23 @@ import java.util.Map;
 
 public class EventListener implements Listener {
 
-    EasyAuth plugin;
-    BaseLang lang;
+    private final EasyAuthAPI api;
+    private final BaseLang lang;
     Map<Player, String> confirmWaiting = new HashMap<>();
 
-    public EventListener(EasyAuth plugin) {
-        this.plugin = plugin;
-        lang = plugin.getLanguage();
+    protected EventListener() {
+        this.api = EasyAuthAPI.getInstance();
+        this.lang = api.getLanguage();
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (plugin.isPlayerLastClientId(player)) {
-            plugin.authenticatePlayer(player);
+        if (api.isPlayerUsingLastClientId(player)) {
+            api.authenticatePlayer(player);
             player.sendMessage(lang.translateString("login.auto"));
         } else {
-            player.sendMessage(plugin.isPlayerRegistered(player) ? lang.translateString("login.input") : lang.translateString("register.input"));
+            player.sendMessage(api.isPlayerRegistered(player) ? lang.translateString("login.input") : lang.translateString("register.input"));
         }
     }
 
@@ -43,16 +42,16 @@ public class EventListener implements Listener {
     public void onPlayerChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
         String message = event.getMessage();
-        if (!plugin.isPlayerAuthenticated(player)) {
+        if (!api.isPlayerAuthenticated(player)) {
             event.setCancelled();
-            if (!plugin.isPlayerRegistered(player)) {
+            if (!api.isPlayerRegistered(player)) {
                 if (!confirmWaiting.containsKey(player)) {
-                    player.sendMessage(lang.translateString("register.confirm", message));
+                    player.sendMessage(lang.translateString("register.confirm", new String[]{message}));
                     confirmWaiting.put(player, message);
                 } else {
                     if (!message.equals("back")) {
                         if (message.equals(confirmWaiting.get(player))) {
-                            plugin.registerPlayer(player, message);
+                            api.registerPlayer(player, message);
                             player.sendMessage(lang.translateString("register.success"));
                             confirmWaiting.remove(player);
                         } else {
@@ -64,8 +63,8 @@ public class EventListener implements Listener {
                     }
                 }
             } else {
-                if (plugin.checkPlayerPassword(player, message)) {
-                    plugin.authenticatePlayer(player);
+                if (api.checkPlayerPassword(player, message)) {
+                    api.authenticatePlayer(player);
                     player.sendMessage(lang.translateString("login.success"));
                 } else {
                     player.kick(lang.translateString("login.fail"));
@@ -77,14 +76,14 @@ public class EventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
@@ -92,42 +91,42 @@ public class EventListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onInventoryPickupItem(InventoryPickupItemEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
-        if (holder instanceof Player && !plugin.isPlayerAuthenticated((Player) holder)) {
+        if (holder instanceof Player && !api.isPlayerAuthenticated((Player) holder)) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer()) && event.getMessage().startsWith("/")) {
+        if (!api.isPlayerAuthenticated(event.getPlayer()) && event.getMessage().startsWith("/")) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (!plugin.isPlayerAuthenticated(event.getPlayer())) {
+        if (!api.isPlayerAuthenticated(event.getPlayer())) {
             event.setCancelled();
         }
     }
@@ -135,14 +134,14 @@ public class EventListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        plugin.deauthenticatePlayer(player);
+        api.deauthenticatePlayer(player);
         confirmWaiting.remove(player);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         Entity entity = event.getEntity();
-        if (entity instanceof Player && !plugin.isPlayerAuthenticated((Player) entity)) {
+        if (entity instanceof Player && !api.isPlayerAuthenticated((Player) entity)) {
             event.setCancelled();
         }
     }

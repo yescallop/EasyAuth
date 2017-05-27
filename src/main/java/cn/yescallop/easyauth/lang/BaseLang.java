@@ -11,13 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BaseLang {
+
     public static final String FALLBACK_LANGUAGE = "eng";
 
-    protected String langName;
+    protected final String langName;
 
     protected Map<String, String> lang = new HashMap<>();
     protected Map<String, String> fallbackLang = new HashMap<>();
-
 
     public BaseLang(String lang) {
         this(lang, null);
@@ -48,14 +48,6 @@ public class BaseLang {
         }
 
 
-    }
-
-    public String getName() {
-        return this.get("language.name");
-    }
-
-    public String getLang() {
-        return langName;
     }
 
     protected Map<String, String> loadLang(String path) {
@@ -120,27 +112,11 @@ public class BaseLang {
         }
     }
 
-    public String translateString(String str) {
-        return this.translateString(str, new String[]{}, null);
-    }
-
-    public String translateString(String str, String param) {
-        return this.translateString(str, new String[]{param});
-    }
-
-    public String translateString(String str, String[] params) {
-        return this.translateString(str, params, null);
-    }
-
-    public String translateString(String str, String param, String onlyPrefix) {
-        return this.translateString(str, new String[]{param}, onlyPrefix);
-    }
-
-    public String translateString(String str, String[] params, String onlyPrefix) {
+    public String translateString(String str, String... params) {
         String baseText = this.get(str);
-        baseText = this.parseTranslation((baseText != null && (onlyPrefix == null || str.indexOf(onlyPrefix) == 0)) ? baseText : str, onlyPrefix);
+        baseText = this.parseTranslation(baseText != null ? baseText : str);
         for (int i = 0; i < params.length; i++) {
-            baseText = baseText.replace("{%" + i + "}", this.parseTranslation(params[i]));
+            baseText = baseText.replace("{%" + i + "}", this.parseTranslation(String.valueOf(params[i])));
         }
 
         return baseText;
@@ -177,11 +153,8 @@ public class BaseLang {
     }
 
     protected String parseTranslation(String text) {
-        return this.parseTranslation(text, null);
-    }
-
-    protected String parseTranslation(String text, String onlyPrefix) {
         String newString = "";
+        text = String.valueOf(text);
 
         String replaceString = null;
 
@@ -190,11 +163,15 @@ public class BaseLang {
         for (int i = 0; i < len; ++i) {
             char c = text.charAt(i);
             if (replaceString != null) {
-                if (((int) c >= 0x30 && (int) c <= 0x39) || ((int) c >= 0x41 && (int) c <= 0x5a) || ((int) c >= 0x61 && (int) c <= 0x7a) || c == '.') {
+                int ord = c;
+                if ((ord >= 0x30 && ord <= 0x39) // 0-9
+                        || (ord >= 0x41 && ord <= 0x5a) // A-Z
+                        || (ord >= 0x61 && ord <= 0x7a) || // a-z
+                        c == '.' || c == '-') {
                     replaceString += String.valueOf(c);
                 } else {
                     String t = this.internalGet(replaceString.substring(1));
-                    if (t != null && (onlyPrefix == null || replaceString.indexOf(onlyPrefix) == 1)) {
+                    if (t != null) {
                         newString += t;
                     } else {
                         newString += replaceString;
@@ -215,7 +192,7 @@ public class BaseLang {
 
         if (replaceString != null) {
             String t = this.internalGet(replaceString.substring(1));
-            if (t != null && (onlyPrefix == null || replaceString.indexOf(onlyPrefix) == 1)) {
+            if (t != null) {
                 newString += t;
             } else {
                 newString += replaceString;
