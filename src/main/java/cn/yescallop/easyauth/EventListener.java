@@ -46,16 +46,17 @@ public class EventListener implements Listener {
             event.setCancelled();
             if (!api.isPlayerRegistered(player)) {
                 if (!confirmWaiting.containsKey(player)) {
-                    player.sendMessage(lang.translateString("register.confirm", new String[]{message}));
+                    player.sendMessage(lang.translateString("register.confirm", message));
                     confirmWaiting.put(player, message);
                 } else {
-                    if (!message.equals("back")) {
+                    if (!message.equals("\\b")) {
+                        message = message.replaceAll("\\\\(.)", "$1");
                         if (message.equals(confirmWaiting.get(player))) {
                             api.registerPlayer(player, message);
                             player.sendMessage(lang.translateString("register.success"));
                             confirmWaiting.remove(player);
                         } else {
-                            player.sendMessage(lang.translateString("register.notmatching"));
+                            player.sendMessage(lang.translateString("register.notmatch"));
                         }
                     } else {
                         player.sendMessage(lang.translateString("register.reinput"));
