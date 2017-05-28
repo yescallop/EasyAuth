@@ -36,25 +36,27 @@ public class EasyAuthAPI {
         return instance;
     }
 
-    protected BaseLang getLanguage() {
+    public BaseLang getLanguage() {
         return lang;
     }
 
     private void initSalt() {
         File saltFile = new File(plugin.getDataFolder(), "salt.txt");
         try {
+            String salt;
             if (!saltFile.exists()) {
                 saltFile.createNewFile();
-                Utils.writeFile(saltFile, PasswordUtil.randomSaltString());
+                Utils.writeFile(saltFile, salt = PasswordUtil.randomSaltString());
+            } else {
+                salt = Utils.readFile(saltFile);
             }
-            String salt = Utils.readFile(saltFile);
             this.salt = Binary.hexStringToBytes(salt);
         } catch (IOException e) {
             this.salt = new byte[0];
         }
     }
 
-    public void authenticatePlayers() {
+    public void authenticateOnlinePlayers() {
         for (Player player : Server.getInstance().getOnlinePlayers().values()) {
             if (isPlayerUsingLastClientId(player)) {
                 authenticatePlayer(player);
@@ -62,46 +64,96 @@ public class EasyAuthAPI {
         }
     }
 
+    public void authenticatePlayer(String name) {
+        Player player = Server.getInstance().getPlayerExact(name);
+        if (player != null) authenticatePlayer(player);
+    }
+
     public void authenticatePlayer(Player player) {
         authedPlayers.add(player);
         updatePlayerLastClientId(player);
+    }
+
+    public void deauthenticatePlayer(String name) {
+        deauthenticatePlayer(Server.getInstance().getPlayerExact(name));
     }
 
     public void deauthenticatePlayer(Player player) {
         authedPlayers.remove(player);
     }
 
+    public boolean isPlayerAuthenticated(String name) {
+        Player player = Server.getInstance().getPlayerExact(name);
+        return player == null ? null : isPlayerAuthenticated(player);
+    }
+
     public boolean isPlayerAuthenticated(Player player) {
         return authedPlayers.contains(player);
     }
 
+    private byte[] getPlayerPassword(Player player) {
+        return getPlayerPassword(player.getName());
+    }
+
+    private byte[] getPlayerPassword(String name) {
+        if (isPlayerRegistered(name)) {
+            Config config = getPlayerConfig(name);
+            String password = config.getString("password");
+            return Binary.hexStringToBytes(password);
+        } else {
+            return null;
+        }
+    }
+
     public boolean checkPlayerPassword(Player player, String password) {
-        Config config = getPlayerConfig(player);
-        String realPasswordStr = config.getString("password");
-        if (realPasswordStr == null) return false;
-        byte[] realPassword = Binary.hexStringToBytes(realPasswordStr);
+        return checkPlayerPassword(player.getName(), password);
+    }
+
+    public boolean checkPlayerPassword(String name, String password) {
+        byte[] realPassword = getPlayerPassword(name);
+        if (realPassword == null) return false;
         byte[] digest = PasswordUtil.digestPassword(password, salt);
         return Arrays.equals(realPassword, digest);
     }
 
     public void setPlayerPassword(Player player, String password) {
-        Config config = getPlayerConfig(player);
+        setPlayerPassword(player.getName(), password);
+    }
+
+    public void setPlayerPassword(String name, String password) {
+        Config config = getPlayerConfig(name);
         config.set("password", PasswordUtil.digestPasswordToString(password, salt));
         config.save();
     }
 
-    public void registerPlayer(Player player, String password) {
-        setPlayerPassword(player, password);
-        authenticatePlayer(player);
+    public boolean registerPlayer(Player player, String password) {
+        return registerPlayer(player.getName(), password);
     }
 
-    public void unregisterPlayer(Player player) {
-        deauthenticatePlayer(player);
-        getPlayerConfigFile(player).delete();
+    public boolean registerPlayer(String name, String password) {
+        if (isPlayerRegistered(name)) return false;
+        setPlayerPassword(name, password);
+        authenticatePlayer(name);
+        return true;
+    }
+
+    public boolean unregisterPlayer(Player player) {
+        return unregisterPlayer(player.getName());
+    }
+
+    public boolean unregisterPlayer(String name) {
+        if (!isPlayerRegistered(name)) return false;
+        getPlayerConfigFile(name).delete();
+        deauthenticatePlayer(name);
+        return true;
     }
 
     public boolean isPlayerRegistered(Player player) {
-        return getPlayerConfigFile(player).exists();
+        return isPlayerRegistered(player.getName());
+    }
+
+    public boolean isPlayerRegistered(String name) {
+        return getPlayerConfigFile(name).exists() && getPlayerConfig(name).exists("password");
     }
 
     public void updatePlayerLastClientId(Player player) {
@@ -109,14 +161,22 @@ public class EasyAuthAPI {
     }
 
     public void setPlayerLastClientId(Player player, Long clientId) {
-        Config config = getPlayerConfig(player);
+        setPlayerLastClientId(player.getName(), clientId);
+    }
+
+    public void setPlayerLastClientId(String name, Long clientId) {
+        Config config = getPlayerConfig(name);
         config.set("lastClientId", clientId);
         config.save();
     }
 
     public Long getPlayerLastClientId(Player player) {
-        if (isPlayerRegistered(player)) {
-            Config config = getPlayerConfig(player);
+        return getPlayerLastClientId(player.getName());
+    }
+
+    public Long getPlayerLastClientId(String name) {
+        if (playerConfigExists(name)) {
+            Config config = getPlayerConfig(name);
             return config.getLong("lastClientId");
         } else {
             return null;
@@ -124,15 +184,32 @@ public class EasyAuthAPI {
     }
 
     public boolean isPlayerUsingLastClientId(Player player) {
+        if (!playerConfigExists(player)) return false;
         Long clientId = getPlayerLastClientId(player);
         return clientId != null && player.getClientId().equals(clientId);
     }
 
-    protected File getPlayerConfigFile(Player player) {
-        return new File(playersFolder, player.getName().toLowerCase() + ".yml");
+    private File getPlayerConfigFile(Player player) {
+        return getPlayerConfigFile(player.getName());
     }
 
-    protected Config getPlayerConfig(Player player) {
-        return new Config(getPlayerConfigFile(player), Config.YAML);
+    private File getPlayerConfigFile(String name) {
+        return new File(playersFolder, name.toLowerCase() + ".yml");
+    }
+
+    private boolean playerConfigExists(Player player) {
+        return playerConfigExists(player.getName());
+    }
+
+    private boolean playerConfigExists(String name) {
+        return getPlayerConfigFile(name).exists();
+    }
+
+    private Config getPlayerConfig(Player player) {
+        return getPlayerConfig(player.getName());
+    }
+
+    private Config getPlayerConfig(String name) {
+        return new Config(getPlayerConfigFile(name.toLowerCase()), Config.YAML);
     }
 }

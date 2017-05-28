@@ -11,7 +11,7 @@ public class EasyAuth extends PluginBase {
         this.getDataFolder().mkdirs();
         this.api = new EasyAuthAPI(this);
         this.getServer().getPluginManager().registerEvents(new EventListener(), this);
-        api.authenticatePlayers();
+        api.authenticateOnlinePlayers();
         this.getLogger().info(api.getLanguage().translateString("easyauth.loaded"));
     }
 }
