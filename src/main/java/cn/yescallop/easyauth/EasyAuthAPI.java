@@ -27,6 +27,7 @@ public class EasyAuthAPI {
         instance = this;
         this.plugin = plugin;
         this.lang = new BaseLang(this.getServer().getLanguage().getLang());
+        plugin.saveDefaultConfig();
         this.config = plugin.getConfig();
         initSalt();
         playersFolder = new File(plugin.getDataFolder(), "players");
