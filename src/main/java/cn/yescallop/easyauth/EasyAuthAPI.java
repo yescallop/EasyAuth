@@ -111,7 +111,7 @@ public class EasyAuthAPI {
     public boolean setPlayerPassword(String name, String password) {
         Config config = getPlayerConfig(name);
         String digestStr = PasswordUtil.digestPasswordToString(password, salt);
-        if (config.get("password").equals(digestStr)) {
+        if (digestStr.equals(config.get("password"))) {
             return false;
         }
         config.set("password", digestStr);

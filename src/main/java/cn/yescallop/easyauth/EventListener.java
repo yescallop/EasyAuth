@@ -50,6 +50,7 @@ public class EventListener implements Listener {
                 } else {
                     if (message.equals(confirmWaiting.get(player))) {
                         api.registerPlayer(player, message);
+                        api.authenticatePlayer(player);
                         player.sendMessage(lang.translateString("register.success"));
                         confirmWaiting.remove(player);
                     } else {
