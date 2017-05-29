@@ -1,6 +1,7 @@
 package cn.yescallop.easyauth;
 
 import cn.nukkit.plugin.PluginBase;
+import cn.yescallop.easyauth.command.CommandManager;
 
 import java.io.IOException;
 
@@ -19,6 +20,7 @@ public class EasyAuth extends PluginBase {
             return;
         }
         this.getServer().getPluginManager().registerEvents(new EventListener(), this);
+        CommandManager.registerAll();
         api.authenticateOnlinePlayers();
         this.getLogger().info(api.getLanguage().translateString("easyauth.loaded"));
     }
