@@ -10,9 +10,7 @@ import cn.yescallop.easyauth.util.PasswordUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class EasyAuthAPI {
 
@@ -21,12 +19,13 @@ public class EasyAuthAPI {
     private final BaseLang lang;
     private final File playersFolder;
     private final Set<Player> authedPlayers = new HashSet<>();
-    private byte[] salt;
+    private final Map<String, Config> playerConfigs = new HashMap<>();
+    private byte[] salt = new byte[0];
 
-    protected EasyAuthAPI(EasyAuth plugin) {
+    protected EasyAuthAPI(EasyAuth plugin) throws IOException {
         instance = this;
         this.plugin = plugin;
-        this.lang = new BaseLang(Server.getInstance().getLanguage().getLang());
+        this.lang = new BaseLang(this.getServer().getLanguage().getLang());
         initSalt();
         playersFolder = new File(plugin.getDataFolder(), "players");
         playersFolder.mkdirs();
@@ -36,55 +35,41 @@ public class EasyAuthAPI {
         return instance;
     }
 
+    public Server getServer() {
+        return plugin.getServer();
+    }
+
     public BaseLang getLanguage() {
         return lang;
     }
 
-    private void initSalt() {
+    private void initSalt() throws IOException {
         File saltFile = new File(plugin.getDataFolder(), "salt.txt");
-        try {
-            String salt;
-            if (!saltFile.exists()) {
-                saltFile.createNewFile();
-                Utils.writeFile(saltFile, salt = PasswordUtil.randomSaltString());
-            } else {
-                salt = Utils.readFile(saltFile);
-            }
-            this.salt = Binary.hexStringToBytes(salt);
-        } catch (IOException e) {
-            this.salt = new byte[0];
+        String salt;
+        if (!saltFile.exists()) {
+            saltFile.createNewFile();
+            Utils.writeFile(saltFile, salt = PasswordUtil.randomSaltString());
+        } else {
+            salt = Utils.readFile(saltFile);
         }
+        this.salt = Binary.hexStringToBytes(salt);
     }
 
     public void authenticateOnlinePlayers() {
-        for (Player player : Server.getInstance().getOnlinePlayers().values()) {
+        for (Player player : this.getServer().getOnlinePlayers().values()) {
             if (isPlayerUsingLastClientId(player)) {
                 authenticatePlayer(player);
             }
         }
     }
 
-    public void authenticatePlayer(String name) {
-        Player player = Server.getInstance().getPlayerExact(name);
-        if (player != null) authenticatePlayer(player);
-    }
-
-    public void authenticatePlayer(Player player) {
-        authedPlayers.add(player);
+    public boolean authenticatePlayer(Player player) {
         updatePlayerLastClientId(player);
+        return authedPlayers.add(player);
     }
 
-    public void deauthenticatePlayer(String name) {
-        deauthenticatePlayer(Server.getInstance().getPlayerExact(name));
-    }
-
-    public void deauthenticatePlayer(Player player) {
-        authedPlayers.remove(player);
-    }
-
-    public boolean isPlayerAuthenticated(String name) {
-        Player player = Server.getInstance().getPlayerExact(name);
-        return player == null ? null : isPlayerAuthenticated(player);
+    public boolean deauthenticatePlayer(Player player) {
+        return authedPlayers.remove(player);
     }
 
     public boolean isPlayerAuthenticated(Player player) {
@@ -96,13 +81,10 @@ public class EasyAuthAPI {
     }
 
     private byte[] getPlayerPassword(String name) {
-        if (isPlayerRegistered(name)) {
-            Config config = getPlayerConfig(name);
-            String password = config.getString("password");
-            return Binary.hexStringToBytes(password);
-        } else {
-            return null;
-        }
+        if (!isPlayerRegistered(name)) return null;
+        Config config = getPlayerConfig(name);
+        String password = config.getString("password");
+        return Binary.hexStringToBytes(password);
     }
 
     public boolean checkPlayerPassword(Player player, String password) {
@@ -116,14 +98,19 @@ public class EasyAuthAPI {
         return Arrays.equals(realPassword, digest);
     }
 
-    public void setPlayerPassword(Player player, String password) {
-        setPlayerPassword(player.getName(), password);
+    public boolean setPlayerPassword(Player player, String password) {
+        return setPlayerPassword(player.getName(), password);
     }
 
-    public void setPlayerPassword(String name, String password) {
+    public boolean setPlayerPassword(String name, String password) {
         Config config = getPlayerConfig(name);
-        config.set("password", PasswordUtil.digestPasswordToString(password, salt));
+        String digestStr = PasswordUtil.digestPasswordToString(password, salt);
+        if (config.get("password").equals(digestStr)) {
+            return false;
+        }
+        config.set("password", digestStr);
         config.save();
+        return true;
     }
 
     public boolean registerPlayer(Player player, String password) {
@@ -133,7 +120,6 @@ public class EasyAuthAPI {
     public boolean registerPlayer(String name, String password) {
         if (isPlayerRegistered(name)) return false;
         setPlayerPassword(name, password);
-        authenticatePlayer(name);
         return true;
     }
 
@@ -144,7 +130,6 @@ public class EasyAuthAPI {
     public boolean unregisterPlayer(String name) {
         if (!isPlayerRegistered(name)) return false;
         getPlayerConfigFile(name).delete();
-        deauthenticatePlayer(name);
         return true;
     }
 
@@ -156,18 +141,22 @@ public class EasyAuthAPI {
         return getPlayerConfigFile(name).exists() && getPlayerConfig(name).exists("password");
     }
 
-    public void updatePlayerLastClientId(Player player) {
-        setPlayerLastClientId(player, player.getClientId());
+    public boolean updatePlayerLastClientId(Player player) {
+        return setPlayerLastClientId(player, player.getClientId());
     }
 
-    public void setPlayerLastClientId(Player player, Long clientId) {
-        setPlayerLastClientId(player.getName(), clientId);
+    public boolean setPlayerLastClientId(Player player, Long clientId) {
+        return setPlayerLastClientId(player.getName(), clientId);
     }
 
-    public void setPlayerLastClientId(String name, Long clientId) {
+    public boolean setPlayerLastClientId(String name, Long clientId) {
         Config config = getPlayerConfig(name);
+        if (config.get("lastClientId").equals(clientId)) {
+            return false;
+        }
         config.set("lastClientId", clientId);
         config.save();
+        return true;
     }
 
     public Long getPlayerLastClientId(Player player) {
@@ -210,6 +199,12 @@ public class EasyAuthAPI {
     }
 
     private Config getPlayerConfig(String name) {
-        return new Config(getPlayerConfigFile(name.toLowerCase()), Config.YAML);
+        return playerConfigs.compute(name, (n, c) -> {
+            if (c == null) {
+                return new Config(getPlayerConfigFile(n), Config.YAML);
+            }
+            c.reload();
+            return c;
+        });
     }
 }

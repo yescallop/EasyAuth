@@ -9,11 +9,7 @@ permissions:
  easyauth.changepassword:
   default: true
  easyauth.changepassword.others:
-  default: op
- easyauth.checkpassword:
-  default: op
- easyauth.register:
-  default: op
+  default: false
  easyauth.unregister:
   default: true
  easyauth.unregister.others:

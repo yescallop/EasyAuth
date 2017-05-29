@@ -26,7 +26,7 @@ public class PasswordUtil {
             digest.update(salt);
             digest.update(password.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            return new byte[0];
+            return null;
         }
         return digest.digest();
     }

@@ -1,7 +1,6 @@
 package cn.yescallop.easyauth;
 
 import cn.nukkit.Player;
-import cn.nukkit.Server;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
@@ -63,7 +62,7 @@ public class EventListener implements Listener {
                     player.sendMessage(lang.translateString("login.success"));
                 } else {
                     player.kick(lang.translateString("login.fail"));
-                    Server.getInstance().getNetwork().blockAddress(player.getAddress(), 30);
+                    api.getServer().getNetwork().blockAddress(player.getAddress(), 30);
                 }
             }
         }
