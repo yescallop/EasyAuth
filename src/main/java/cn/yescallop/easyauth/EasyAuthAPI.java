@@ -158,7 +158,7 @@ public class EasyAuthAPI {
 
     public boolean setPlayerLastClientId(String name, Long clientId) {
         Config config = getPlayerConfig(name);
-        if (config.get("lastClientId").equals(clientId)) {
+        if (Objects.equals(clientId, config.get("lastClientId"))) {
             return false;
         }
         config.set("lastClientId", clientId);

@@ -46,6 +46,7 @@ public class ChangePasswordCommand extends CommandBase {
             sender.sendMessage(lang.translateString("commands.changepassword.same"));
             return false;
         }
+        api.setPlayerLastClientId(name, null);
         return true;
     }
 }
