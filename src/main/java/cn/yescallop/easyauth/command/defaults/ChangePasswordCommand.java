@@ -1,5 +1,6 @@
 package cn.yescallop.easyauth.command.defaults;
 
+import cn.nukkit.Player;
 import cn.nukkit.command.CommandSender;
 import cn.yescallop.easyauth.command.CommandBase;
 
@@ -36,7 +37,8 @@ public class ChangePasswordCommand extends CommandBase {
             password = args[1];
         }
         if (api.setPlayerPassword(name, password)) {
-            sender.sendMessage(lang.translateString("commands.changepassword.success.own", password));
+            Player player = api.getServer().getPlayerExact(name);
+            if (player != null) player.sendMessage(lang.translateString("commands.changepassword.success.own", password));
             if (!name.equalsIgnoreCase(sender.getName())) {
                 sender.sendMessage(lang.translateString("commands.changepassword.success", name, password));
             }
