@@ -36,9 +36,9 @@ public class ChangePasswordCommand extends CommandBase {
             password = args[1];
         }
         if (api.setPlayerPassword(name, password)) {
-            sender.sendMessage(lang.translateString("commands.changepassword.success", password));
+            sender.sendMessage(lang.translateString("commands.changepassword.success.own", password));
             if (!name.equalsIgnoreCase(sender.getName())) {
-                sender.sendMessage(lang.translateString("commands.changepassword.success.other", name, password));
+                sender.sendMessage(lang.translateString("commands.changepassword.success", name, password));
             }
         } else {
             sender.sendMessage(lang.translateString("commands.changepassword.same"));
