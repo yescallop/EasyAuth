@@ -1,0 +1,3 @@
+permissions-console-only:
+ commands.changepassword.others: true
+ commands.unregister.others: true

@@ -28,7 +28,7 @@ public class ChangePasswordCommand extends CommandBase {
             name = sender.getName();
             password = args[0];
         } else {
-            if (!sender.hasPermission("easyauth.changepassword.others")) {
+            if (!this.testPermission(sender, "easyauth.changepassword.others")) {
                 this.sendPermissionMessage(sender);
                 return false;
             }

@@ -20,12 +20,14 @@ public class EasyAuthAPI {
     private final File playersFolder;
     private final Set<Player> authedPlayers = new HashSet<>();
     private final Map<String, Config> playerConfigs = new HashMap<>();
+    private final Config config;
     private byte[] salt = new byte[0];
 
     protected EasyAuthAPI(EasyAuth plugin) throws IOException {
         instance = this;
         this.plugin = plugin;
         this.lang = new BaseLang(this.getServer().getLanguage().getLang());
+        this.config = plugin.getConfig();
         initSalt();
         playersFolder = new File(plugin.getDataFolder(), "players");
         playersFolder.mkdirs();
@@ -41,6 +43,10 @@ public class EasyAuthAPI {
 
     public BaseLang getLanguage() {
         return lang;
+    }
+
+    public boolean isPermissionConsoleOnly(String s) {
+        return (boolean) config.getSection("permissions-console-only").getOrDefault(s, false);
     }
 
     private void initSalt() throws IOException {
@@ -203,7 +209,6 @@ public class EasyAuthAPI {
             if (c == null) {
                 return new Config(getPlayerConfigFile(n), Config.YAML);
             }
-            c.reload();
             return c;
         });
     }

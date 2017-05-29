@@ -38,4 +38,8 @@ public abstract class CommandBase extends Command {
     protected void sendPermissionMessage(CommandSender sender) {
         sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.permission"));
     }
+
+    public boolean testPermission(CommandSender target, String s) {
+        return api.isPermissionConsoleOnly(s) ? !target.isPlayer() : target.hasPermission(s);
+    }
 }
