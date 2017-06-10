@@ -173,7 +173,7 @@ public class EasyAuthAPI {
     public Long getPlayerLastClientId(String name) {
         if (playerConfigExists(name)) {
             Config config = getPlayerConfig(name);
-            return config.getLong("lastClientId");
+            return (Long) config.get("lastClientId");
         } else {
             return null;
         }
@@ -210,6 +210,7 @@ public class EasyAuthAPI {
             if (c == null) {
                 return new Config(getPlayerConfigFile(n), Config.YAML);
             }
+            c.reload();
             return c;
         });
     }
